@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STELLA</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/iosevka-aile/index.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>STELLA</h1>
+      <p class="date" id="today-date"></p>
+    </header>
+
+    <section class="habits-section">
+      <h2>Today</h2>
+      <div class="habits-grid" id="habits-grid"></div>
+    </section>
+
+    <section class="notes-section">
+      <h2>Notes</h2>
+      <textarea id="today-notes" placeholder="Add notes for today..."></textarea>
+    </section>
+
+    <section class="history-section">
+      <h2>Last 30 Days</h2>
+      <div class="history-container" id="history-container"></div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-date" id="modal-date"></span>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <p class="modal-body" id="modal-body"></p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

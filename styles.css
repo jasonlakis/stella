@@ -1,0 +1,398 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f5f0eb;
+  --surface: #faf7f4;
+  --surface2: #ede8e2;
+  --border: #ddd7cf;
+  --text: #2c2420;
+  --text-muted: #9e8f85;
+  --accent-meditation: #5C4B51;
+  --accent-yoga: #8CBEB2;
+  --accent-strength: #F3B562;
+  --accent-cardio: #F06060;
+  --accent-sauna: #DDCC62;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Iosevka Aile', sans-serif;
+  min-height: 100vh;
+  padding: 2rem 1rem 2rem 3rem;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 25px;
+  height: 100%;
+  background: linear-gradient(to right,
+    #5C4B51 0px 5px,
+    #8CBEB2 5px 10px,
+    #F3B562 10px 15px,
+    #F06060 15px 20px,
+    #DDCC62 20px 25px
+  );
+  z-index: 999;
+}
+
+.app {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 2.5rem;
+}
+
+header h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #8CBEB2;
+}
+
+.date {
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+}
+
+h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+/* Today's habits */
+.habits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+  gap: 0.675rem;
+  margin-bottom: 2.5rem;
+}
+
+.habit-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.125rem 0.9rem;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s, border-color 0.2s, background 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.habit-card:hover {
+  transform: translateY(-2px);
+}
+
+.habit-card.done {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.habit-card.done::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+.habit-icon {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+
+.habit-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text);
+}
+
+.habit-streak {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.habit-streak span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.habit-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+  font-size: 0.7rem;
+}
+
+.habit-card.done .habit-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* History */
+.history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.history-label {
+  width: 90px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.history-label .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.history-dots {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.day-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  transition: background 0.2s;
+  cursor: default;
+  position: relative;
+}
+
+.day-dot.filled {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.day-dot[data-today="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.history-header {
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.day-date-label {
+  width: 14px;
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: left;
+  white-space: nowrap;
+  height: 48px;
+  line-height: 14px;
+}
+
+.week-sep {
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 0 3px;
+}
+
+.day-date-label.today {
+  color: #8CBEB2;
+  font-weight: 700;
+}
+
+.day-dot:hover::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.7rem;
+  padding: 3px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Notes section */
+.notes-section {
+  margin-bottom: 2.5rem;
+}
+
+#today-notes {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-family: 'Iosevka Aile', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text);
+  resize: vertical;
+  min-height: 90px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#today-notes:focus {
+  border-color: #8CBEB2;
+}
+
+#today-notes::placeholder {
+  color: var(--text-muted);
+}
+
+/* Notes dots in history */
+.note-dot {
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  border-color: var(--border);
+  cursor: default;
+}
+
+.note-dot.filled {
+  background: var(--text-muted);
+  border-color: var(--text-muted);
+  cursor: pointer;
+}
+
+.note-dot.filled:hover {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.notes-row {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8CBEB2;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+.modal-body {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 500px) {
+  .habits-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .history-label {
+    width: 70px;
+    font-size: 0.75rem;
+  }
+
+  .day-dot {
+    width: 11px;
+    height: 11px;
+  }
+}
