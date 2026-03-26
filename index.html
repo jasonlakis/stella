@@ -8,9 +8,29 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app">
-    <header>
+
+  <!-- Auth screen -->
+  <div class="auth-screen" id="auth-screen">
+    <div class="auth-card">
       <h1>STELLA</h1>
+      <p class="auth-subtitle">Sign in to sync your habits across devices</p>
+      <form id="auth-form" autocomplete="on">
+        <input type="email" id="auth-email" placeholder="Email" autocomplete="email" required />
+        <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" required />
+        <p class="auth-message" id="auth-message"></p>
+        <button type="submit" id="auth-submit">Sign In</button>
+        <button type="button" id="auth-toggle">Need an account? Sign up</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main app -->
+  <div class="app" id="app" style="display:none">
+    <header>
+      <div class="header-top">
+        <h1>STELLA</h1>
+        <button class="signout-btn" id="signout-btn">Sign out</button>
+      </div>
       <p class="date" id="today-date"></p>
     </header>
 
@@ -40,6 +60,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>

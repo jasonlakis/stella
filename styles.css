@@ -49,8 +49,113 @@ body::before {
   margin: 0 auto;
 }
 
+/* Auth screen */
+.auth-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem 2rem 3rem;
+}
+
+.auth-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 360px;
+}
+
+.auth-card h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #8CBEB2;
+  margin-bottom: 0.4rem;
+}
+
+.auth-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.75rem;
+}
+
+#auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#auth-form input {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  font-family: 'Iosevka Aile', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#auth-form input:focus {
+  border-color: #8CBEB2;
+}
+
+#auth-form input::placeholder {
+  color: var(--text-muted);
+}
+
+#auth-submit {
+  background: #8CBEB2;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem;
+  font-family: 'Iosevka Aile', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin-top: 0.25rem;
+}
+
+#auth-submit:hover { opacity: 0.88; }
+#auth-submit:disabled { opacity: 0.5; cursor: default; }
+
+#auth-toggle {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Iosevka Aile', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: center;
+  padding: 0;
+}
+
+#auth-toggle:hover { color: var(--text); }
+
+.auth-message {
+  font-size: 0.8rem;
+  min-height: 1em;
+  text-align: center;
+}
+
+.auth-message.error   { color: #F06060; }
+.auth-message.success { color: #8CBEB2; }
+
+/* Header */
 header {
   margin-bottom: 2.5rem;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 header h1 {
@@ -58,6 +163,23 @@ header h1 {
   font-weight: 900;
   letter-spacing: -0.5px;
   color: #8CBEB2;
+}
+
+.signout-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 0.3rem 0.75rem;
+  font-family: 'Iosevka Aile', sans-serif;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.signout-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
 }
 
 .date {
