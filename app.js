@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ─── Habits config ────────────────────────────────────────────────────────────
 const HABITS = [
-  { id: 'meditation', name: 'Meditation', icon: 'images/meditation.svg', accent: '#5C4B51' },
+  { id: 'meditation', name: 'Meditation', icon: 'images/meditation.svg', accent: '#993C66' },
   { id: 'yoga',       name: 'Yoga',       icon: 'images/yoga.svg',       accent: '#8CBEB2' },
   { id: 'strength',   name: 'Strength',   icon: 'images/strength.svg',   accent: '#F3B562' },
   { id: 'cardio',     name: 'Cardio',     icon: 'images/cardio.svg',     accent: '#F06060' },
