@@ -110,6 +110,47 @@ function scheduleNoteSync(dateStr, text) {
   }, 1000);
 }
 
+// ─── Tennis tips ──────────────────────────────────────────────────────────────
+const TENNIS_TIPS = [
+  "Keep your eye on the ball all the way through contact — watch it hit your strings.",
+  "On your serve, toss the ball slightly in front of you to naturally drive weight forward.",
+  "Between points, take a slow breath and reset your focus before the next rally.",
+  "Follow through fully on groundstrokes — a short swing usually means a short shot.",
+  "Stay on the balls of your feet so you can split-step and react in any direction.",
+  "Aim for a target area, not just 'in' — pick a cone-sized zone on every shot.",
+  "On the return of serve, start your backswing early as the ball is still rising.",
+  "Use your non-dominant arm for balance; let it guide your backswing on the forehand.",
+  "When pulled wide, recover toward the center mark, not toward your previous position.",
+  "A relaxed grip through the swing generates more racket-head speed than squeezing tight.",
+  "Approach shots should be deep and down the line — don't give your opponent angles.",
+  "At the net, keep the racket face slightly open and use a short, punchy volley motion.",
+  "Watch your opponent's body and racket angle to anticipate direction before they hit.",
+  "On topspin groundstrokes, brush up the back of the ball — low to high, hip to shoulder.",
+  "A consistent, reliable second serve is more valuable than a flashy, risky one.",
+  "Use the whole court strategically: open it up wide, then close it with a winner down the line.",
+  "After a big point, reset mentally — treat each game as its own fresh start.",
+  "Position your feet sideways to the net when hitting, not squared up.",
+  "Practice your weakest shot in warm-up, not just your favorite one.",
+  "When serving into the sun, adjust your toss to a lower height or shift your position.",
+  "Slice backhands are excellent neutralizers — use them to stay in a tough rally.",
+  "On overheads, point your non-hitting hand at the ball to track it and align your body.",
+  "Don't go for too much on the first ball after a weak return — build the point first.",
+  "Play high-percentage tennis in big moments: more net clearance, less line-hugging.",
+  "Footwork is the foundation — good shots start with getting in position early.",
+  "Use the kick serve to force a high bouncing ball into the opponent's backhand.",
+  "When your opponent is at the net, a sharp, low passing shot beats a lob most of the time.",
+  "Take big swings on practice balls; take big swings on match balls — trust your technique.",
+  "A calm mind between points is a competitive advantage as real as any stroke.",
+  "Record yourself playing occasionally — video reveals habits you can't feel in the moment.",
+];
+
+function renderTennisTip() {
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const tip = TENNIS_TIPS[dayOfYear % TENNIS_TIPS.length];
+  document.getElementById('tennis-tip-text').textContent = tip;
+}
+
 // ─── App logic ────────────────────────────────────────────────────────────────
 function toDateStr(date) {
   const y = date.getFullYear();
@@ -158,6 +199,8 @@ function renderApp() {
   document.getElementById('today-date').textContent = today.toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
+
+  renderTennisTip();
 
   // Habit cards
   const grid = document.getElementById('habits-grid');
