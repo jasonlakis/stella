@@ -66,6 +66,39 @@ async function syncFromSupabase() {
   return { habitRows, noteRows };
 }
 
+// Fix any existing Supabase rows that were stored without a user_id.
+// Runs once per user (tracked via localStorage flag) by re-upserting all local data.
+async function repairMissingUserIds() {
+  const flagKey = 'habit_tracker_uid_repaired';
+  if (localStorage.getItem(flagKey)) return;
+  const { data: { session } } = await sb.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) return;
+
+  const data  = loadData();
+  const notes = loadNotes();
+
+  const habitRows = [];
+  for (const [date, habits] of Object.entries(data)) {
+    for (const [habit_id, done] of Object.entries(habits)) {
+      if (done) habitRows.push({ user_id: userId, date, habit_id });
+    }
+  }
+  const noteRows = Object.entries(notes).map(([date, note]) => ({ user_id: userId, date, note }));
+
+  const ops = [];
+  if (habitRows.length) ops.push(sb.from('habit_data').upsert(habitRows, { onConflict: 'user_id,date,habit_id' }));
+  if (noteRows.length)  ops.push(sb.from('notes').upsert(noteRows, { onConflict: 'user_id,date' }));
+
+  if (ops.length) {
+    const results = await Promise.all(ops);
+    const hasError = results.some(r => r.error);
+    if (!hasError) localStorage.setItem(flagKey, '1');
+  } else {
+    localStorage.setItem(flagKey, '1');
+  }
+}
+
 // Push existing localStorage data up to Supabase.
 // Called once on first login if the user has local history but no cloud data.
 async function pushLocalToSupabase() {
@@ -89,9 +122,11 @@ async function pushLocalToSupabase() {
 }
 
 async function upsertHabit(dateStr, habitId, done) {
+  const { data: { session } } = await sb.auth.getSession();
+  const userId = session?.user?.id;
   if (done) {
     const { error } = await sb.from('habit_data').upsert(
-      { date: dateStr, habit_id: habitId },
+      { user_id: userId, date: dateStr, habit_id: habitId },
       { onConflict: 'user_id,date,habit_id' }
     );
     if (error) console.error('upsertHabit error:', error);
@@ -456,6 +491,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
       Object.keys(loadData()).length > 0 || Object.keys(loadNotes()).length > 0;
     if (hasLocal) await pushLocalToSupabase();
   }
+
+  // One-time repair: re-upsert all local data with user_id to fix rows saved without it.
+  await repairMissingUserIds();
 
   renderApp(); // Re-render with fresh data from Supabase
 });
