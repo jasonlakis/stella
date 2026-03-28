@@ -36,7 +36,12 @@ async function syncFromSupabase() {
   ]);
 
   if (hErr || nErr) {
-    console.error('Sync error:', hErr || nErr);
+    const err = hErr || nErr;
+    console.error('Sync error:', err);
+    if (err.status === 401) {
+      await sb.auth.signOut();
+      showAuth();
+    }
     return false;
   }
 
@@ -428,7 +433,13 @@ document.getElementById('signout-btn').addEventListener('click', () => {
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-sb.auth.onAuthStateChange(async (_event, session) => {
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'TOKEN_REFRESH_FAILED') {
+    await sb.auth.signOut(); // clears the stale token from localStorage
+    showAuth();
+    return;
+  }
+
   if (!session) {
     showAuth();
     return;

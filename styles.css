@@ -295,9 +295,11 @@ h2 {
 }
 
 .tennis-tip-icon {
-  font-size: 1.2rem;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-  line-height: 1.5;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 #tennis-tip-text {
