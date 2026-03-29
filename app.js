@@ -14,6 +14,9 @@ const HABITS = [
   { id: 'sauna',      name: 'Sauna',      icon: 'images/sauna.svg',      accent: '#DDCC62' },
 ];
 
+// ─── Current user ─────────────────────────────────────────────────────────────
+let currentUserId = null;
+
 // ─── Local cache ──────────────────────────────────────────────────────────────
 // localStorage is used as a local mirror of Supabase so the UI renders instantly.
 // Supabase is always the source of truth.
@@ -29,10 +32,8 @@ function saveNotesLocal(notes) { localStorage.setItem(NOTES_KEY,   JSON.stringif
 
 // Fetch all data for the current user and update the local cache.
 // Returns { habitRows, noteRows } on success, or false on error.
-async function syncFromSupabase() {
-  console.log('[sync] starting');
-  const { data: { session } } = await sb.auth.getSession();
-  const userId = session?.user?.id;
+async function syncFromSupabase(userId) {
+  console.log('[sync] starting, userId:', userId);
   console.log('[sync] userId:', userId);
 
   const [{ data: habitRows, error: hErr }, { data: noteRows, error: nErr }] = await Promise.all([
@@ -106,8 +107,7 @@ async function syncFromSupabase() {
 // Push existing localStorage data up to Supabase.
 // Called once on first login if the user has local history but no cloud data.
 async function pushLocalToSupabase() {
-  const { data: { session } } = await sb.auth.getSession();
-  const userId = session?.user?.id;
+  const userId = currentUserId;
   const data  = loadData();
   const notes = loadNotes();
 
@@ -126,8 +126,7 @@ async function pushLocalToSupabase() {
 }
 
 async function upsertHabit(dateStr, habitId, done) {
-  const { data: { session } } = await sb.auth.getSession();
-  const userId = session?.user?.id;
+  const userId = currentUserId;
   if (done) {
     const { error } = await sb.from('habit_data').upsert(
       { user_id: userId, date: dateStr, habit_id: habitId },
@@ -144,8 +143,7 @@ let noteDebounceTimer = null;
 function scheduleNoteSync(dateStr, text) {
   clearTimeout(noteDebounceTimer);
   noteDebounceTimer = setTimeout(async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    const userId = session?.user?.id;
+    const userId = currentUserId;
     if (text.trim()) {
       await sb.from('notes').upsert({ user_id: userId, date: dateStr, note: text }, { onConflict: 'user_id,date' });
     } else {
@@ -465,6 +463,7 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
 });
 
 document.getElementById('signout-btn').addEventListener('click', () => {
+  currentUserId = null;
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(NOTES_KEY);
   showAuth();
@@ -475,20 +474,23 @@ document.getElementById('signout-btn').addEventListener('click', () => {
 sb.auth.onAuthStateChange(async (event, session) => {
   console.log('[auth] event:', event, 'session:', !!session);
   if (event === 'TOKEN_REFRESH_FAILED') {
+    currentUserId = null;
     await sb.auth.signOut(); // clears the stale token from localStorage
     showAuth();
     return;
   }
 
   if (!session) {
+    currentUserId = null;
     showAuth();
     return;
   }
 
+  currentUserId = session.user.id;
   showApp();
   renderApp(); // Render immediately from local cache while we fetch
 
-  const result = await syncFromSupabase();
+  const result = await syncFromSupabase(currentUserId);
 
   // First-time login: if the cloud is empty but localStorage has data, migrate it up.
   if (result && result.habitRows.length === 0 && result.noteRows.length === 0) {
