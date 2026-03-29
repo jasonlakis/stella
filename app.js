@@ -30,6 +30,9 @@ function saveNotesLocal(notes) { localStorage.setItem(NOTES_KEY,   JSON.stringif
 // Fetch all data for the current user and update the local cache.
 // Returns { habitRows, noteRows } on success, or false on error.
 async function syncFromSupabase() {
+  const { data: { session } } = await sb.auth.getSession();
+  const userId = session?.user?.id;
+
   const [{ data: habitRows, error: hErr }, { data: noteRows, error: nErr }] = await Promise.all([
     sb.from('habit_data').select('date, habit_id'),
     sb.from('notes').select('date, note'),
@@ -45,59 +48,49 @@ async function syncFromSupabase() {
     return false;
   }
 
-  // If Supabase returned nothing at all, don't overwrite local data —
-  // it likely means data was never saved there (upsert bug) or the project is paused.
-  // Only treat cloud as source of truth when it has actual records.
   if (habitRows.length === 0 && noteRows.length === 0) {
     return { habitRows, noteRows };
   }
 
-  const data = {};
+  // Build cloud data map
+  const cloudData = {};
   for (const { date, habit_id } of habitRows) {
-    if (!data[date]) data[date] = {};
-    data[date][habit_id] = true;
+    if (!cloudData[date]) cloudData[date] = {};
+    cloudData[date][habit_id] = true;
   }
-  saveDataLocal(data);
 
-  const notes = {};
-  for (const { date, note } of noteRows) notes[date] = note;
-  saveNotesLocal(notes);
+  // Merge: keep local dates not in cloud (they may have been saved without user_id).
+  // Cloud data wins for any date present in both.
+  const localData = loadData();
+  const merged = { ...localData };
+  for (const [date, habits] of Object.entries(cloudData)) {
+    merged[date] = habits;
+  }
 
-  return { habitRows, noteRows };
-}
-
-// Fix any existing Supabase rows that were stored without a user_id.
-// Runs once per user (tracked via localStorage flag) by re-upserting all local data.
-// Must run BEFORE syncFromSupabase so local data isn't overwritten first.
-async function repairMissingUserIds() {
-  const flagKey = 'habit_tracker_uid_repaired_v2'; // v2: bumped because v1 ran in wrong order
-  if (localStorage.getItem(flagKey)) return;
-  const { data: { session } } = await sb.auth.getSession();
-  const userId = session?.user?.id;
-  if (!userId) return;
-
-  const data  = loadData();
-  const notes = loadNotes();
-
-  const habitRows = [];
-  for (const [date, habits] of Object.entries(data)) {
-    for (const [habit_id, done] of Object.entries(habits)) {
-      if (done) habitRows.push({ user_id: userId, date, habit_id });
+  // Push any local-only dates up to Supabase with the correct user_id.
+  if (userId) {
+    const repairRows = [];
+    for (const [date, habits] of Object.entries(localData)) {
+      if (!cloudData[date]) {
+        for (const [habit_id, done] of Object.entries(habits)) {
+          if (done) repairRows.push({ user_id: userId, date, habit_id });
+        }
+      }
+    }
+    if (repairRows.length) {
+      const { error } = await sb.from('habit_data').upsert(repairRows, { onConflict: 'user_id,date,habit_id' });
+      if (error) console.error('Repair upsert error:', error);
     }
   }
-  const noteRows = Object.entries(notes).map(([date, note]) => ({ user_id: userId, date, note }));
 
-  const ops = [];
-  if (habitRows.length) ops.push(sb.from('habit_data').upsert(habitRows, { onConflict: 'user_id,date,habit_id' }));
-  if (noteRows.length)  ops.push(sb.from('notes').upsert(noteRows, { onConflict: 'user_id,date' }));
+  saveDataLocal(merged);
 
-  if (ops.length) {
-    const results = await Promise.all(ops);
-    const hasError = results.some(r => r.error);
-    if (!hasError) localStorage.setItem(flagKey, '1');
-  } else {
-    localStorage.setItem(flagKey, '1');
-  }
+  const cloudNotes = {};
+  for (const { date, note } of noteRows) cloudNotes[date] = note;
+  const localNotes = loadNotes();
+  saveNotesLocal({ ...localNotes, ...cloudNotes });
+
+  return { habitRows, noteRows };
 }
 
 // Push existing localStorage data up to Supabase.
@@ -483,10 +476,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   showApp();
   renderApp(); // Render immediately from local cache while we fetch
-
-  // One-time repair: push all local data with user_id BEFORE syncing,
-  // so rows stored without user_id aren't lost when the sync overwrites localStorage.
-  await repairMissingUserIds();
 
   const result = await syncFromSupabase();
 
