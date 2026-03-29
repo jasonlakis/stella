@@ -30,13 +30,18 @@ function saveNotesLocal(notes) { localStorage.setItem(NOTES_KEY,   JSON.stringif
 // Fetch all data for the current user and update the local cache.
 // Returns { habitRows, noteRows } on success, or false on error.
 async function syncFromSupabase() {
+  console.log('[sync] starting');
   const { data: { session } } = await sb.auth.getSession();
   const userId = session?.user?.id;
+  console.log('[sync] userId:', userId);
 
   const [{ data: habitRows, error: hErr }, { data: noteRows, error: nErr }] = await Promise.all([
     sb.from('habit_data').select('date, habit_id'),
     sb.from('notes').select('date, note'),
   ]);
+
+  console.log('[sync] habitRows:', habitRows?.length, 'hErr:', hErr);
+  console.log('[sync] noteRows:', noteRows?.length, 'nErr:', nErr);
 
   if (hErr || nErr) {
     const err = hErr || nErr;
@@ -49,6 +54,7 @@ async function syncFromSupabase() {
   }
 
   if (habitRows.length === 0 && noteRows.length === 0) {
+    console.log('[sync] Supabase returned 0 rows — skipping overwrite');
     return { habitRows, noteRows };
   }
 
