@@ -473,6 +473,7 @@ document.getElementById('signout-btn').addEventListener('click', () => {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
+  console.log('[auth] event:', event, 'session:', !!session);
   if (event === 'TOKEN_REFRESH_FAILED') {
     await sb.auth.signOut(); // clears the stale token from localStorage
     showAuth();
