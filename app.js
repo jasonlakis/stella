@@ -68,8 +68,9 @@ async function syncFromSupabase() {
 
 // Fix any existing Supabase rows that were stored without a user_id.
 // Runs once per user (tracked via localStorage flag) by re-upserting all local data.
+// Must run BEFORE syncFromSupabase so local data isn't overwritten first.
 async function repairMissingUserIds() {
-  const flagKey = 'habit_tracker_uid_repaired';
+  const flagKey = 'habit_tracker_uid_repaired_v2'; // v2: bumped because v1 ran in wrong order
   if (localStorage.getItem(flagKey)) return;
   const { data: { session } } = await sb.auth.getSession();
   const userId = session?.user?.id;
@@ -483,6 +484,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
   showApp();
   renderApp(); // Render immediately from local cache while we fetch
 
+  // One-time repair: push all local data with user_id BEFORE syncing,
+  // so rows stored without user_id aren't lost when the sync overwrites localStorage.
+  await repairMissingUserIds();
+
   const result = await syncFromSupabase();
 
   // First-time login: if the cloud is empty but localStorage has data, migrate it up.
@@ -491,9 +496,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
       Object.keys(loadData()).length > 0 || Object.keys(loadNotes()).length > 0;
     if (hasLocal) await pushLocalToSupabase();
   }
-
-  // One-time repair: re-upsert all local data with user_id to fix rows saved without it.
-  await repairMissingUserIds();
 
   renderApp(); // Re-render with fresh data from Supabase
 });
