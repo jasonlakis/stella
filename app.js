@@ -77,9 +77,13 @@ async function syncFromSupabase() {
         }
       }
     }
+    console.log('[sync] cloudDates:', Object.keys(cloudData));
+    console.log('[sync] localDates:', Object.keys(localData));
+    console.log('[sync] repairRows:', repairRows);
     if (repairRows.length) {
       const { error } = await sb.from('habit_data').upsert(repairRows, { onConflict: 'user_id,date,habit_id' });
       if (error) console.error('Repair upsert error:', error);
+      else console.log('[sync] repair upsert succeeded');
     }
   }
 
