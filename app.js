@@ -60,7 +60,7 @@ async function syncFromSupabase(userId) {
   if (hErr || nErr) {
     const err = hErr || nErr;
     console.error('Sync error:', err);
-    if (err.status === 401) {
+    if (err.status === 401 || err.message?.includes('Lock') || err.message?.includes('lock')) {
       await sb.auth.signOut();
       showAuth();
     }
