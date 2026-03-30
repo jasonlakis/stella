@@ -449,8 +449,6 @@ h2 {
 /* Notes dots in history */
 .note-dot {
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
   background: transparent;
   border-color: var(--border);
   cursor: default;
