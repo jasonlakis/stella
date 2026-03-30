@@ -36,13 +36,23 @@ async function syncFromSupabase(userId) {
   console.log('[sync] starting, userId:', userId);
   console.log('[sync] userId:', userId);
 
-  console.log('[sync] fetching habit_data...');
-  const { data: habitRows, error: hErr } = await sb.from('habit_data').select('date, habit_id');
-  console.log('[sync] habit_data done:', habitRows?.length, hErr);
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Supabase query timed out')), 10000)
+  );
 
-  console.log('[sync] fetching notes...');
-  const { data: noteRows, error: nErr } = await sb.from('notes').select('date, note');
-  console.log('[sync] notes done:', noteRows?.length, nErr);
+  let habitRows, hErr, noteRows, nErr;
+  try {
+    [{ data: habitRows, error: hErr }, { data: noteRows, error: nErr }] = await Promise.race([
+      Promise.all([
+        sb.from('habit_data').select('date, habit_id'),
+        sb.from('notes').select('date, note'),
+      ]),
+      timeout,
+    ]);
+  } catch (e) {
+    console.warn('Sync timed out or failed:', e.message);
+    return false;
+  }
 
   console.log('[sync] habitRows:', habitRows?.length, 'hErr:', hErr);
   console.log('[sync] noteRows:', noteRows?.length, 'nErr:', nErr);
