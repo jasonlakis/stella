@@ -342,15 +342,15 @@ h2 {
 
 .history-dots {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   flex-wrap: nowrap;
   overflow: hidden;
   flex: 1;
 }
 
 .day-dot {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 4px;
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -376,7 +376,7 @@ h2 {
 }
 
 .day-date-label {
-  width: 16px;
+  width: 15px;
   flex-shrink: 0;
   font-size: 0.65rem;
   color: var(--text-muted);
@@ -385,7 +385,7 @@ h2 {
   text-align: left;
   white-space: nowrap;
   height: 72px;
-  line-height: 16px;
+  line-height: 15px;
 }
 
 .week-sep {
@@ -393,7 +393,7 @@ h2 {
   background: var(--border);
   flex-shrink: 0;
   align-self: stretch;
-  margin: 0 3px;
+  margin: 0 2px;
 }
 
 .day-date-label.today {
