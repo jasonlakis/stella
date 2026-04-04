@@ -12,6 +12,7 @@ const HABITS = [
   { id: 'strength',   name: 'Strength',   icon: 'images/strength.svg',   accent: '#F3B562' },
   { id: 'cardio',     name: 'Cardio',     icon: 'images/cardio.svg',     accent: '#F06060' },
   { id: 'sauna',      name: 'Sauna',      icon: 'images/sauna.svg',      accent: '#DDCC62' },
+  { id: 'tennis',     name: 'Tennis',     icon: 'images/tennis.svg',     accent: '#9FC131' },
 ];
 
 // ─── Current user ─────────────────────────────────────────────────────────────
