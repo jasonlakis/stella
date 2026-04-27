@@ -41,12 +41,13 @@ async function syncFromSupabase(userId) {
     setTimeout(() => reject(new Error('Supabase query timed out')), 10000)
   );
 
-  let habitRows, hErr, noteRows, nErr;
+  let habitRows, hErr, noteRows, nErr, calRows, cErr;
   try {
-    [{ data: habitRows, error: hErr }, { data: noteRows, error: nErr }] = await Promise.race([
+    [{ data: habitRows, error: hErr }, { data: noteRows, error: nErr }, { data: calRows, error: cErr }] = await Promise.race([
       Promise.all([
         sb.from('habit_data').select('date, habit_id'),
         sb.from('notes').select('date, note'),
+        sb.from('calendar_entries').select('id, date, text, color'),
       ]),
       timeout,
     ]);
@@ -57,9 +58,10 @@ async function syncFromSupabase(userId) {
 
   console.log('[sync] habitRows:', habitRows?.length, 'hErr:', hErr);
   console.log('[sync] noteRows:', noteRows?.length, 'nErr:', nErr);
+  console.log('[sync] calRows:', calRows?.length, 'cErr:', cErr);
 
-  if (hErr || nErr) {
-    const err = hErr || nErr;
+  if (hErr || nErr || cErr) {
+    const err = hErr || nErr || cErr;
     console.error('Sync error:', err);
     if (err.status === 401 || err.message?.includes('Lock') || err.message?.includes('lock')) {
       await sb.auth.signOut();
@@ -68,9 +70,9 @@ async function syncFromSupabase(userId) {
     return false;
   }
 
-  if (habitRows.length === 0 && noteRows.length === 0) {
+  if (habitRows.length === 0 && noteRows.length === 0 && calRows.length === 0) {
     console.log('[sync] Supabase returned 0 rows — skipping overwrite');
-    return { habitRows, noteRows };
+    return { habitRows, noteRows, calRows };
   }
 
   // Build cloud data map
@@ -115,7 +117,20 @@ async function syncFromSupabase(userId) {
   const localNotes = loadNotes();
   saveNotesLocal({ ...localNotes, ...cloudNotes });
 
-  return { habitRows, noteRows };
+  // Merge calendar: cloud wins per date, local-only dates kept
+  const cloudCalByDate = {};
+  for (const { id, date, text, color } of calRows) {
+    if (!cloudCalByDate[date]) cloudCalByDate[date] = [];
+    cloudCalByDate[date].push({ id, text, color });
+  }
+  const localCal  = loadCalendarEntries();
+  const mergedCal = { ...localCal };
+  for (const [date, entries] of Object.entries(cloudCalByDate)) {
+    mergedCal[date] = entries;
+  }
+  saveCalendarEntries(mergedCal);
+
+  return { habitRows, noteRows, calRows };
 }
 
 // Push existing localStorage data up to Supabase.
@@ -133,9 +148,18 @@ async function pushLocalToSupabase() {
   }
   const noteRows = Object.entries(notes).map(([date, note]) => ({ user_id: userId, date, note }));
 
+  const calEntries = loadCalendarEntries();
+  const calRows = [];
+  for (const [date, entries] of Object.entries(calEntries)) {
+    for (const entry of entries) {
+      if (entry.id) calRows.push({ id: entry.id, user_id: userId, date, text: entry.text, color: entry.color });
+    }
+  }
+
   const ops = [];
   if (habitRows.length) ops.push(sb.from('habit_data').upsert(habitRows, { onConflict: 'user_id,date,habit_id' }));
   if (noteRows.length)  ops.push(sb.from('notes').upsert(noteRows,  { onConflict: 'user_id,date' }));
+  if (calRows.length)   ops.push(sb.from('calendar_entries').upsert(calRows, { onConflict: 'id' }));
   await Promise.all(ops);
 }
 
@@ -151,6 +175,19 @@ async function upsertHabit(dateStr, habitId, done) {
     const { error } = await sb.from('habit_data').delete().eq('date', dateStr).eq('habit_id', habitId);
     if (error) console.error('deleteHabit error:', error);
   }
+}
+
+async function upsertCalendarEntry(dateStr, entry) {
+  const { error } = await sb.from('calendar_entries').upsert(
+    { id: entry.id, user_id: currentUserId, date: dateStr, text: entry.text, color: entry.color },
+    { onConflict: 'id' }
+  );
+  if (error) console.error('upsertCalendarEntry error:', error);
+}
+
+async function deleteCalendarEntry(id) {
+  const { error } = await sb.from('calendar_entries').delete().eq('id', id);
+  if (error) console.error('deleteCalendarEntry error:', error);
 }
 
 let noteDebounceTimer = null;
@@ -504,14 +541,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
   currentUserId = session.user.id;
   showApp();
+  ensureCalendarIds();
   renderApp(); // Render immediately from local cache while we fetch
 
   const result = await syncFromSupabase(currentUserId);
 
   // First-time login: if the cloud is empty but localStorage has data, migrate it up.
-  if (result && result.habitRows.length === 0 && result.noteRows.length === 0) {
+  if (result && result.habitRows.length === 0 && result.noteRows.length === 0 && result.calRows.length === 0) {
     const hasLocal =
-      Object.keys(loadData()).length > 0 || Object.keys(loadNotes()).length > 0;
+      Object.keys(loadData()).length > 0 || Object.keys(loadNotes()).length > 0 || Object.keys(loadCalendarEntries()).length > 0;
     if (hasLocal) await pushLocalToSupabase();
   }
 
@@ -524,6 +562,17 @@ function loadCalendarEntries() {
   try { return JSON.parse(localStorage.getItem(CALENDAR_KEY)) || {}; } catch { return {}; }
 }
 function saveCalendarEntries(e) { localStorage.setItem(CALENDAR_KEY, JSON.stringify(e)); }
+
+function ensureCalendarIds() {
+  const entries = loadCalendarEntries();
+  let changed = false;
+  for (const dateStr of Object.keys(entries)) {
+    for (const entry of entries[dateStr]) {
+      if (!entry.id) { entry.id = crypto.randomUUID(); changed = true; }
+    }
+  }
+  if (changed) saveCalendarEntries(entries);
+}
 
 const ENTRY_COLORS = ['#993C66','#8CBEB2','#F3B562','#F06060','#DDCC62','#9FC131','#7B9EA8','#9B8EC4'];
 let calendarYear  = new Date().getFullYear();
@@ -620,10 +669,12 @@ function renderCalModalEntries(dateStr) {
     del.className = 'cal-entry-del';
     del.textContent = '✕';
     del.addEventListener('click', () => {
-      const all = loadCalendarEntries();
+      const all     = loadCalendarEntries();
+      const entryId = all[dateStr][idx]?.id;
       all[dateStr].splice(idx, 1);
       if (!all[dateStr].length) delete all[dateStr];
       saveCalendarEntries(all);
+      if (entryId) deleteCalendarEntry(entryId);
       renderCalModalEntries(dateStr);
       renderCalendar();
     });
@@ -668,10 +719,12 @@ document.getElementById('cal-modal-add').addEventListener('click', () => {
   const text    = document.getElementById('cal-modal-text').value.trim();
   if (!text) return;
   const dateStr = document.getElementById('cal-modal-date').value;
+  const entry   = { id: crypto.randomUUID(), text, color: selectedColor };
   const all     = loadCalendarEntries();
   if (!all[dateStr]) all[dateStr] = [];
-  all[dateStr].push({ text, color: selectedColor });
+  all[dateStr].push(entry);
   saveCalendarEntries(all);
+  upsertCalendarEntry(dateStr, entry);
   document.getElementById('cal-modal-text').value = '';
   renderCalModalEntries(dateStr);
   renderCalendar();
