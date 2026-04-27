@@ -60,6 +60,31 @@
       <h2>Last 30 Days</h2>
       <div class="history-container" id="history-container"></div>
     </section>
+
+    <section class="calendar-section">
+      <div class="calendar-nav">
+        <button class="cal-nav-btn" id="cal-prev">&#8249;</button>
+        <h2 id="cal-month-label" style="margin-bottom:0;flex:1;text-align:center"></h2>
+        <button class="cal-nav-btn" id="cal-next">&#8250;</button>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="cal-modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-date" id="cal-modal-date-label"></span>
+        <button class="modal-close" id="cal-modal-close">✕</button>
+      </div>
+      <div class="cal-modal-entries" id="cal-modal-entries"></div>
+      <div class="cal-modal-form">
+        <input type="text" id="cal-modal-text" placeholder="Add entry..." maxlength="40" />
+        <div class="cal-color-swatches" id="cal-color-swatches"></div>
+        <button class="cal-add-btn" id="cal-modal-add">Add</button>
+      </div>
+      <input type="hidden" id="cal-modal-date" />
+    </div>
   </div>
 
   <div class="modal-overlay" id="modal-overlay">

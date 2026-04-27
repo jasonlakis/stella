@@ -531,6 +531,241 @@ h2 {
   white-space: pre-wrap;
 }
 
+/* Calendar */
+.calendar-section {
+  margin-top: 100px;
+  margin-bottom: 2.5rem;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cal-nav-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0;
+  font-family: 'Iosevka Aile', sans-serif;
+  transition: color 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.cal-nav-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-dow {
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding: 0.25rem 0 0.5rem;
+}
+
+.cal-cell {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.35rem 0.4rem 0.4rem;
+  min-height: 70px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.cal-cell:hover {
+  border-color: #8CBEB2;
+  background: color-mix(in srgb, #8CBEB2 6%, var(--surface));
+}
+
+.cal-cell.cal-empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+.cal-cell.cal-today {
+  border-color: #8CBEB2;
+  background: color-mix(in srgb, #8CBEB2 8%, var(--surface));
+}
+
+.cal-date-num {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  align-self: flex-end;
+  line-height: 1;
+}
+
+.cal-today .cal-date-num {
+  color: #8CBEB2;
+  font-weight: 700;
+}
+
+.cal-pill {
+  font-size: 0.6rem;
+  font-weight: 500;
+  padding: 1px 5px 1px 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pill-color) 18%, var(--surface));
+  border-left: 3px solid var(--pill-color);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.6;
+}
+
+.cal-dots {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 2px;
+}
+
+.cal-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Calendar modal */
+.cal-modal-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+  empty:hidden;
+}
+
+.cal-modal-entries:empty {
+  display: none;
+}
+
+.cal-modal-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cal-pill-static {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 3px 8px 3px 7px;
+}
+
+.cal-entry-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 0.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cal-entry-del:hover {
+  color: #F06060;
+}
+
+.cal-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+#cal-modal-text {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  font-family: 'Iosevka Aile', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#cal-modal-text:focus {
+  border-color: #8CBEB2;
+}
+
+#cal-modal-text::placeholder {
+  color: var(--text-muted);
+}
+
+.cal-color-swatches {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cal-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.12s;
+}
+
+.cal-swatch:hover {
+  transform: scale(1.15);
+}
+
+.cal-swatch.active {
+  border-color: var(--text);
+  transform: scale(1.1);
+}
+
+.cal-add-btn {
+  background: #8CBEB2;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem;
+  font-family: 'Iosevka Aile', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cal-add-btn:hover {
+  opacity: 0.88;
+}
+
 @media (max-width: 500px) {
   .habits-grid {
     grid-template-columns: repeat(3, 1fr);

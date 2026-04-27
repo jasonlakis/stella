@@ -365,6 +365,8 @@ function renderApp() {
   notesRow.appendChild(notesDots);
   container.appendChild(notesRow);
 
+  renderCalendar();
+
   // History — habit rows
   HABITS.forEach(habit => {
     const row = document.createElement('div');
@@ -514,4 +516,166 @@ sb.auth.onAuthStateChange(async (event, session) => {
   }
 
   renderApp(); // Re-render with fresh data from Supabase
+});
+
+// ─── Calendar ─────────────────────────────────────────────────────────────────
+const CALENDAR_KEY = 'habit_tracker_calendar';
+function loadCalendarEntries() {
+  try { return JSON.parse(localStorage.getItem(CALENDAR_KEY)) || {}; } catch { return {}; }
+}
+function saveCalendarEntries(e) { localStorage.setItem(CALENDAR_KEY, JSON.stringify(e)); }
+
+const ENTRY_COLORS = ['#993C66','#8CBEB2','#F3B562','#F06060','#DDCC62','#9FC131','#7B9EA8','#9B8EC4'];
+let calendarYear  = new Date().getFullYear();
+let calendarMonth = new Date().getMonth();
+let selectedColor = ENTRY_COLORS[0];
+
+function renderCalendar() {
+  const data     = loadData();
+  const entries  = loadCalendarEntries();
+  const todayStr = toDateStr(new Date());
+
+  document.getElementById('cal-month-label').textContent =
+    new Date(calendarYear, calendarMonth, 1)
+      .toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase();
+
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '';
+
+  ['S','M','T','W','T','F','S'].forEach(d => {
+    const h = document.createElement('div');
+    h.className = 'cal-dow';
+    h.textContent = d;
+    grid.appendChild(h);
+  });
+
+  const firstDow    = new Date(calendarYear, calendarMonth, 1).getDay();
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+
+  for (let i = 0; i < firstDow; i++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-cell cal-empty';
+    grid.appendChild(blank);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (dateStr === todayStr ? ' cal-today' : '');
+
+    const num = document.createElement('span');
+    num.className = 'cal-date-num';
+    num.textContent = d;
+    cell.appendChild(num);
+
+    (entries[dateStr] || []).forEach(entry => {
+      const pill = document.createElement('div');
+      pill.className = 'cal-pill';
+      pill.style.setProperty('--pill-color', entry.color);
+      pill.textContent = entry.text;
+      cell.appendChild(pill);
+    });
+
+    const done = HABITS.filter(h => isHabitDoneOn(data, h.id, dateStr));
+    if (done.length) {
+      const dotsRow = document.createElement('div');
+      dotsRow.className = 'cal-dots';
+      done.forEach(h => {
+        const dot = document.createElement('div');
+        dot.className = 'cal-dot';
+        dot.style.background = h.accent;
+        dotsRow.appendChild(dot);
+      });
+      cell.appendChild(dotsRow);
+    }
+
+    cell.addEventListener('click', () => openCalEntry(dateStr));
+    grid.appendChild(cell);
+  }
+}
+
+function openCalEntry(dateStr) {
+  document.getElementById('cal-modal-date-label').textContent =
+    new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  document.getElementById('cal-modal-date').value = dateStr;
+  document.getElementById('cal-modal-text').value = '';
+  renderCalModalEntries(dateStr);
+  renderCalColorSwatches();
+  document.getElementById('cal-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('cal-modal-text').focus(), 50);
+}
+
+function renderCalModalEntries(dateStr) {
+  const entries   = loadCalendarEntries();
+  const container = document.getElementById('cal-modal-entries');
+  container.innerHTML = '';
+  (entries[dateStr] || []).forEach((entry, idx) => {
+    const row  = document.createElement('div');
+    row.className = 'cal-modal-entry-row';
+    const pill = document.createElement('span');
+    pill.className = 'cal-pill cal-pill-static';
+    pill.style.setProperty('--pill-color', entry.color);
+    pill.textContent = entry.text;
+    const del  = document.createElement('button');
+    del.className = 'cal-entry-del';
+    del.textContent = '✕';
+    del.addEventListener('click', () => {
+      const all = loadCalendarEntries();
+      all[dateStr].splice(idx, 1);
+      if (!all[dateStr].length) delete all[dateStr];
+      saveCalendarEntries(all);
+      renderCalModalEntries(dateStr);
+      renderCalendar();
+    });
+    row.appendChild(pill);
+    row.appendChild(del);
+    container.appendChild(row);
+  });
+}
+
+function renderCalColorSwatches() {
+  const container = document.getElementById('cal-color-swatches');
+  container.innerHTML = '';
+  ENTRY_COLORS.forEach(color => {
+    const swatch = document.createElement('button');
+    swatch.className = 'cal-swatch' + (color === selectedColor ? ' active' : '');
+    swatch.style.background = color;
+    swatch.addEventListener('click', () => {
+      selectedColor = color;
+      renderCalColorSwatches();
+    });
+    container.appendChild(swatch);
+  });
+}
+
+document.getElementById('cal-prev').addEventListener('click', () => {
+  calendarMonth--;
+  if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+  renderCalendar();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  calendarMonth++;
+  if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+  renderCalendar();
+});
+document.getElementById('cal-modal-close').addEventListener('click', () => {
+  document.getElementById('cal-modal-overlay').classList.remove('open');
+});
+document.getElementById('cal-modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+document.getElementById('cal-modal-add').addEventListener('click', () => {
+  const text    = document.getElementById('cal-modal-text').value.trim();
+  if (!text) return;
+  const dateStr = document.getElementById('cal-modal-date').value;
+  const all     = loadCalendarEntries();
+  if (!all[dateStr]) all[dateStr] = [];
+  all[dateStr].push({ text, color: selectedColor });
+  saveCalendarEntries(all);
+  document.getElementById('cal-modal-text').value = '';
+  renderCalModalEntries(dateStr);
+  renderCalendar();
+});
+document.getElementById('cal-modal-text').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('cal-modal-add').click();
 });
